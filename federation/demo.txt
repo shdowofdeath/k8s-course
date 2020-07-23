@@ -1,0 +1,93 @@
+kubectl --namespace=federation logs $(kubectl get pods --namespace=federation -l module=federation-controller-manager -o name
+
+kubectl run -it dig --image sequenceiq/alpine-dig --restart Never --context $ASIA -- sh
+
+global federated containrazied service
+=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-
+
+gcloud dns managed-zones create federation --description "Federation DNS Zone" --dns-name innercloud.com
+
+gcloud container clusters create us-cluster --zone us-west1-a --scopes "cloud-platform,storage-ro,logging-write,monitoring-write,service-control,service-management,https://www.googleapis.com/auth/ndev.clouddns.readwrite" & say u-s cluster ready &
+
+gcloud container clusters create europe-cluster --zone europe-west1-b --scopes "cloud-platform,storage-ro,logging-write,monitoring-write,service-control,service-management,https://www.googleapis.com/auth/ndev.clouddns.readwrite" & say europe cluster ready &
+
+
+gcloud container clusters create asia-cluster --zone asia-east1-a --scopes "cloud-platform,storage-ro,logging-write,monitoring-write,service-control,service-management,https://www.googleapis.com/auth/ndev.clouddns.readwrite" && say asia cluster ready
+
+export ASIA=gke_iftachtest_asia-east1-a_asia-cluster
+export US=gke_iftachtest_us-west1-a_us-cluster
+export EUROPE=gke_iftachtest_europe-west1-b_europe-cluster
+
+export ASIA=asia-cluster
+export US=us-cluster
+export EUROPE=europe-cluster
+
+kubefed init federation --host-cluster-context=$US --dns-zone-name=innercloud.com. --dns-provider 'google-clouddns'
+
+kubectl config use-context federation
+
+kubefed join us-cluster --cluster-context=$US --host-cluster-context=$US
+kubefed join europe-cluster --cluster-context=$EUROPE --host-cluster-context=$US
+kubefed join asia-cluster --cluster-context=$ASIA --host-cluster-context=$US
+
+kubectl get clusters
+
+kubectl create namespace default
+
+#kubectl create ns kube-system
+#kubectl apply -f kubedns-config.yaml
+
+gcloud compute addresses create global-ingress --global
+
+kubectl create deployment:
+kubectl create -f region-man.yaml
+./listFedStuff.sh pod default
+
+kubectl scale deploy region-man --replicas=6
+
+./listFedStuff.sh pod default
+
+kubectl create service nodeport region-man --tcp=80:80 --node-port=30040 --context $US
+kubectl create service nodeport region-man --tcp=80:80 --node-port=30040 --context $ASIA
+kubectl create service nodeport region-man --tcp=80:80 --node-port=30040 --context $EUROPE
+
+kubectl get pod --context $US -n federation-system
+
+gcloud compute firewall-rules create federated-ingress-firewall-rule --source-ranges 130.211.0.0/22 --allow tcp:30040 --network default
+
+
+./listFedStuff.sh endpoints default
+
+kubectl create -f ingress.yaml
+
+kubectl get ing
+
+http://www.locabrowser.com
+https://geopeeker.com/
+
+for region in US EUROPE ASIA; do
+  echo ''
+  echo '=-=-=-=-=-=-=-=-=-=-=-==-==-==-=-=--=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-'
+  echo $region
+  kubectl get $1 --no-headers --context $(eval echo "$"$region)
+  echo '=-=-=-=-==-==-=-=-=-=-=-=-=-=-=-=-=--=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-='
+done 
+
+kubefed unjoin europe-cluster --host-cluster-context=$US
+kubefed unjoin asia-cluster --host-cluster-context=$US
+kubefed unjoin us-cluster --host-cluster-context=$US
+
+kubectl delete ns federation-system --context=$US
+
+gcloud container clusters delete us-cluster --zone us-west1-a --quiet &
+gcloud container clusters delete europe-cluster --zone europe-west1-b --quiet &
+gcloud container clusters delete asia-cluster --zone asia-east1-a --quiet
+
+gcloud compute addresses delete global-ingress 
+gcloud compute firewall-rules delete federated-ingress-firewall-rule
+gcloud dns managed-zones delete federation
+
+kubectl config delete-context federation
+kubectl config delete-context $US
+kubectl config delete-context $EUROPE
+kubectl config delete-context $ASIA

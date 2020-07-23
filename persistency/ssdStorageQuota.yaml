@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: ssd-quota
+spec:
+  hard:
+    persistentvolumeclaims: "3"
+    fast.storageclass.storage.k8s.io/requests.storage: "20Gi"
+    requests.storage: "100Gi"

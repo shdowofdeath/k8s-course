@@ -1,0 +1,20 @@
+apiVersion: apps/v1beta1 # for versions before 1.6.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app3
+spec:
+  replicas: 4
+  template:
+    metadata:
+      labels:
+        app: app3
+    spec:
+      containers:
+      - name: frontend
+        image: nginx
+      tolerations:
+      - key: "nodeState"
+        operator: "Equal"
+        value: "eviction"
+        effect: "NoExecute"
+        #tolerationSeconds: 3600 

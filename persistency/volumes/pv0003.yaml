@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pv0003
+spec:
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 15Gi
+  gcePersistentDisk:
+    fsType: "ext4"
+    pdName: "gce-disk-3"

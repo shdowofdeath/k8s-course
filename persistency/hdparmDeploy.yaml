@@ -1,0 +1,27 @@
+apiVersion: apps/v1beta1 # for versions before 1.6.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: disk-bench
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: disk-bench
+    spec:
+      volumes:
+      - name: pv-storage
+        persistentVolumeClaim:
+          claimName: standard-claim
+      containers:
+      - name: bencher
+        args:
+        - "-t"
+        - "/dev/sdb"
+        imagePullPolicy: IfNotPresent
+        image: iftachsc/hdparm:latest
+        volumeMounts:
+        - mountPath: "/gceDisk"
+          name: pv-storage
+        securityContext:
+          privileged: true

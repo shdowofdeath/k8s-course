@@ -1,0 +1,21 @@
+apiVersion: settings.k8s.io/v1alpha1
+kind: PodPreset
+metadata:
+  name: allow-database
+spec:
+  selector:
+    matchLabels:
+      role: frontend
+  env:
+    - name: DB_PORT
+      value: "6379"
+  volumeMounts:
+    - mountPath: /etc/app/config.json
+      readOnly: true
+      name: secret-volume
+  volumes:
+    - name: cache-volume
+      emptyDir: {}
+    - name: secret-volume
+      secret:
+         secretName: test-secret

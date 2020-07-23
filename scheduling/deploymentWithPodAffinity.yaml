@@ -1,0 +1,23 @@
+apiVersion: apps/v1beta1 # for versions before 1.6.0 use extensions/v1beta1
+kind: Deployment
+metadata:
+  name: app2
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: app2
+    spec:
+      containers:
+      - name: frontend
+        image: nginx
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: friend
+                operator: In
+                values: [""]
+            topologyKey: kubernetes.io/hostname

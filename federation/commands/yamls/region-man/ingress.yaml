@@ -1,0 +1,10 @@
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: global-ingress
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: "global-ingress"
+spec:
+  backend:
+    serviceName: region-man
+    servicePort: 80

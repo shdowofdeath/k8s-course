@@ -1,0 +1,42 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: region-man
+  annotations:
+    federation.kubernetes.io/deployment-preferences: |
+        {
+            "rebalance": true,
+            "clusters": {
+                "asia-cluster": {
+                    "minReplicas": 1,
+                    "maxReplicas": 3,
+                    "weight": 1
+                },
+                "europe-cluster": {
+                    "minReplicas": 1,
+                    "maxReplicas": 6,
+                    "weight": 2
+                },
+                "europe-d-cluster": {
+                    "weight": 0
+                },
+                "us-cluster": {
+                    "minReplicas": 2,
+                    "maxReplicas": 9,
+                    "weight": 3
+                }
+            }
+        }
+spec:
+  replicas: 6
+  template:
+    metadata:
+      labels:
+        app: region-man
+    spec:
+      containers:
+      - name: region-man
+        image: iftachsc/region-man:back2school-1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80

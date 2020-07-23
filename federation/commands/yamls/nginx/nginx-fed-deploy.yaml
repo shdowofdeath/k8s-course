@@ -1,0 +1,35 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: nginx
+  annotations:
+    federation.kubernetes.io/deployment-preferences: |
+        {
+            "rebalance": true,
+            "clusters": {
+                "asia-cluster": {
+                    "maxReplicas": 0,
+                    "weight": 0
+                },
+                "europe-cluster": {
+                    "maxReplicas": 2,
+                    "weight": 1
+                },
+                "us-cluster": {
+                    "maxReplicas": 2,
+                    "weight": 1
+                }
+            }
+        }
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx:latest
+        ports:
+        - containerPort: 80
